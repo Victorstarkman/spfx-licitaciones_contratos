@@ -1,0 +1,125 @@
+.contenedorTabla {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid #dce5ed;
+    border-radius: 10px;
+    background-color: #ffffff;
+}
+.subtitulo {
+    margin: 4px 0 16px;
+    color: #526b80;
+    font-size: 12px;
+    line-height: 1.5;
+}
+.tabla {
+    width: 100%;
+    min-width: 1000px;
+    border-collapse: collapse;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 12px;
+    color: #17385d;
+
+    thead {
+        background-color: #f1f6f7;
+
+        th {
+            padding: 13px 14px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #526b80;
+            border-bottom: 2px solid #dce5ed;
+            white-space: nowrap;
+        }
+    }
+
+    tbody {
+        tr {
+            background-color: #ffffff;
+            transition: background-color 0.15s ease;
+
+            &:hover {
+                background-color: #eff9f8;
+            }
+        }
+
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #edf1f5;
+            vertical-align: top;
+            line-height: 1.5;
+        }
+        th:first-child,
+        td:first-child {
+            min-width: 100px;
+            white-space: nowrap;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+    }
+}
+.paginacion {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    margin-top: 14px;
+    padding: 12px 4px;
+
+    color: #526b80;
+    font-size: 12px;
+}
+
+.controlesPagina {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.botonPagina {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 36px;
+    height: 40px;
+    padding: 0;
+
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+
+    color: #526b80;
+    font-size: 24px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        color: #078c87;
+        background: transparent;
+    }
+
+    &:focus-visible {
+        outline: 2px solid #078c87;
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+}
+
+.numeroPagina {
+    padding: 0 8px;
+    background: transparent;
+    color: #17385d;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}

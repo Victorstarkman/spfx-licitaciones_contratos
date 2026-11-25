@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "licitaciones-contratos-client-side-solution",
+    "id": "a4dc3b75-cf43-4dff-9ba0-f6493fb76919",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.23.2"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "licitaciones-contratos description"
+      },
+      "longDescription": {
+        "default": "licitaciones-contratos description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "licitaciones-contratos Feature",
+        "description": "The feature that activates elements of the licitaciones-contratos solution.",
+        "id": "86794f0d-2169-4f70-beb1-01766563213a",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/licitaciones-contratos.sppkg"
+  }
+}
