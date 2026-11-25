@@ -30,4 +30,7 @@ export interface IFiltrosProps {
     serviciosHabilitados: Set<string>;
     organismosHabilitados: Set<string>;
     periodosHabilitados: Set<number>;
+
+    //aviso de deshabilitacion 
+    deshabilitarPeriodo: boolean;
 }

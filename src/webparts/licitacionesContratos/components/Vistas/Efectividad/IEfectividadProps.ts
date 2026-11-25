@@ -11,4 +11,10 @@ export interface IEfectividadProps {
 
     // ID de la empresa seleccionada
     empresaSeleccionada: string;
-}
+    
+    aniosDisponibles: number[];
+
+    aniosSeleccionados: number[];
+
+    onCambiarAnios: (anios: number[]) => void;
+    }

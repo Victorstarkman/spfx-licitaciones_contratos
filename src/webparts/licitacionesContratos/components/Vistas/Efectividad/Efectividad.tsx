@@ -12,6 +12,7 @@ import {
 import TarjetaBaseCalculo from './TarjetaBaseCalculo/TarjetaBaseCalculo';
 import GraficoEfectividad from './GraficoEfectividad/GraficoEfectividad';
 import TablaLicitaciones from '../../tablaLicitacion/TablaLicitacion';
+import SelectorAnios from './SelectorAnios/SelectorAnios';
 
 const Efectividad = (
     props: IEfectividadProps
@@ -42,7 +43,11 @@ const Efectividad = (
 
   return (
     <section>
-
+        <SelectorAnios
+        aniosDisponibles={props.aniosDisponibles}
+        aniosSeleccionados={props.aniosSeleccionados}
+        onCambiarAnios={props.onCambiarAnios}
+         />
         <h2>Análisis de efectividad competitiva</h2>
 
         {!resultado ? (

@@ -24,6 +24,7 @@ const [servicioSeleccionado, setServicioSeleccionado]= React.useState<string>(''
 const [organismoSeleccionado, setOrganismoSeleccionado] = React.useState<string>('');
 const [serieIPC, setSerieIPC] = React.useState<ISerieIPC | undefined> (undefined);
 const [vistaActiva, setVistaActiva] = React.useState<'explorar' | 'efectividad'>('explorar');
+const [aniosSeleccionados, setAniosSeleccionados] = React.useState<number[]>([]);
 
 //uso de servicios
     React.useEffect(()=> {
@@ -102,7 +103,10 @@ const opcionesHabilitadas = React.useMemo(() => {
         empresa: empresaSeleccionada,
         periodo: periodoSeleccionado,
         servicio: servicioSeleccionado,
-        organismo: organismoSeleccionado
+        organismo: organismoSeleccionado,
+        anios: vistaActiva === 'efectividad'
+            ? aniosSeleccionados
+            : undefined
     };
 
     // Cada selector ignora su propio filtro
@@ -152,10 +156,16 @@ const opcionesHabilitadas = React.useMemo(() => {
     empresaSeleccionada,
     periodoSeleccionado,
     servicioSeleccionado,
-    organismoSeleccionado
+    organismoSeleccionado,
+    vistaActiva,
+    aniosSeleccionados
 ]);
-
-
+console.log('Control de empresas:', {
+    vistaActiva,
+    empresaSeleccionada,
+    aniosSeleccionados,
+    empresasHabilitadas: opcionesHabilitadas.empresas.size
+});
 const licitacionesFiltradas = React.useMemo(() => {
 
         const texto = busqueda.trim().toLowerCase();
@@ -176,9 +186,16 @@ const licitacionesFiltradas = React.useMemo(() => {
             !empresaSeleccionada ||
             idsEmpresas.indexOf(Number(empresaSeleccionada)) !== -1;
         
-    const coincidePeriodo = 
+    const coincidePeriodo =
+    vistaActiva === 'efectividad'
+        ? (
+            aniosSeleccionados.length === 0 ||
+            aniosSeleccionados.indexOf(item.anio) !== -1 
+        )
+        : (
             !periodoSeleccionado ||
             item.anio === Number(periodoSeleccionado)
+        );
         
     const coincideTipoServicio = 
             !servicioSeleccionado ||
@@ -217,7 +234,9 @@ const licitacionesFiltradas = React.useMemo(() => {
         empresaSeleccionada,
         periodoSeleccionado,
         servicioSeleccionado,
-        organismoSeleccionado]);
+        organismoSeleccionado,
+        vistaActiva,
+        aniosSeleccionados]);
     
     
     const empresaFiltrada = competidores.find ( 
@@ -332,6 +351,7 @@ const licitacionesFiltradas = React.useMemo(() => {
             serviciosHabilitados={opcionesHabilitadas.servicios}
             organismosHabilitados={opcionesHabilitadas.organismos}
             periodosHabilitados={opcionesHabilitadas.periodos}
+            deshabilitarPeriodo={vistaActiva === 'efectividad'}
         />
 
 {/* Contenido de la vista seleccionada */}
@@ -364,7 +384,10 @@ const licitacionesFiltradas = React.useMemo(() => {
         licitaciones={licitacionesFiltradas}
         competidores={competidores}
         empresaSeleccionada={empresaSeleccionada}
-    />
+        aniosDisponibles={periodosDisponibles}
+        aniosSeleccionados={aniosSeleccionados}
+        onCambiarAnios={setAniosSeleccionados}
+        />
 )}
 </>
 )};

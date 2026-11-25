@@ -83,7 +83,12 @@ const Filtros = (props: IFiltrosProps): React.ReactElement => {
 
                     <select
                         id="filtroPeriodo"
-                        value={props.periodoSeleccionado}
+                        disabled={props.deshabilitarPeriodo}
+                        value={
+                            props.deshabilitarPeriodo
+                                ? ''
+                                : props.periodoSeleccionado
+                        }
                         onChange={(event) =>
                             props.setPeriodoSeleccionado(
                                 event.currentTarget.value

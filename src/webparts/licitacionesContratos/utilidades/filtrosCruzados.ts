@@ -6,7 +6,9 @@ export interface ICriteriosFiltros {
     periodo: string;
     servicio: string;
     organismo: string;
+    anios?: number[];
 }
+
 
 export type TCampoFiltro =
     | 'empresa'
@@ -34,8 +36,17 @@ export const filtrarPorCriterios = (
 
         const coincidePeriodo =
             excluir === 'periodo' ||
-            !criterios.periodo ||
-            item.anio === Number(criterios.periodo);
+            (
+                criterios.anios !== undefined
+                    ? (
+                        criterios.anios.length === 0 ||
+                        criterios.anios.indexOf(item.anio) !== -1
+                    )
+                    : (
+                        !criterios.periodo ||
+                        item.anio === Number(criterios.periodo)
+                    )
+            );
 
         const coincideServicio =
             excluir === 'servicio' ||
