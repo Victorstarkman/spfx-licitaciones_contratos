@@ -33,4 +33,6 @@ export interface IFiltrosProps {
 
     //aviso de deshabilitacion 
     deshabilitarPeriodo: boolean;
+    //aviso de limpieza de filtro 
+    onLimpiarAnios: () => void;
 }

@@ -8,11 +8,18 @@ import styles from './Filtros.module.scss'
 const Filtros = (props: IFiltrosProps): React.ReactElement => {
 
     const limpiarFiltros = (): void => {
+
         props.setBusqueda('');
         props.setEmpresaSeleccionada('');
-        props.setPeriodoSeleccionado('');
         props.setServicioSeleccionado('');
         props.setOrganismoSeleccionado('');
+
+        if (props.deshabilitarPeriodo) {
+            props.onLimpiarAnios();
+        } else {
+            props.setPeriodoSeleccionado('');
+        }
+
     };
 
     return (

@@ -160,12 +160,6 @@ const opcionesHabilitadas = React.useMemo(() => {
     vistaActiva,
     aniosSeleccionados
 ]);
-console.log('Control de empresas:', {
-    vistaActiva,
-    empresaSeleccionada,
-    aniosSeleccionados,
-    empresasHabilitadas: opcionesHabilitadas.empresas.size
-});
 const licitacionesFiltradas = React.useMemo(() => {
 
         const texto = busqueda.trim().toLowerCase();
@@ -243,19 +237,23 @@ const licitacionesFiltradas = React.useMemo(() => {
         empresa => empresa.id === Number(empresaSeleccionada)
 
     );
+    const descripcionPeriodo =
+    vistaActiva === 'efectividad'
+        ? aniosSeleccionados.join(', ')
+        : periodoSeleccionado;
 
     const descripcionFiltros = [
         busqueda &&`Busqueda: ${busqueda}`,
         empresaSeleccionada && `Empresa: ${empresaFiltrada?.nombre ?? empresaSeleccionada}`,
-        periodoSeleccionado && `Periodo: ${periodoSeleccionado}`,
         servicioSeleccionado && `Servicio: ${servicioSeleccionado}`,
-        organismoSeleccionado && `Organismo: ${organismoSeleccionado}`
+        organismoSeleccionado && `Organismo: ${organismoSeleccionado}`,
+        descripcionPeriodo && `Período: ${descripcionPeriodo}`,
     ].filter(Boolean).join(' . ') || 'Sin Filtros'
     
     const hayFiltrosActivos = Boolean(
         busqueda.trim() ||
         empresaSeleccionada ||
-        periodoSeleccionado ||
+        descripcionPeriodo ||
         servicioSeleccionado ||
         organismoSeleccionado
     );
@@ -352,6 +350,7 @@ const licitacionesFiltradas = React.useMemo(() => {
             organismosHabilitados={opcionesHabilitadas.organismos}
             periodosHabilitados={opcionesHabilitadas.periodos}
             deshabilitarPeriodo={vistaActiva === 'efectividad'}
+            onLimpiarAnios={() => setAniosSeleccionados([])}
         />
 
 {/* Contenido de la vista seleccionada */}
