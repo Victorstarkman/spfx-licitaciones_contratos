@@ -1,0 +1,23 @@
+.contenedorEfectividad {
+    display: grid;
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+    gap: 18px;
+    align-items: stretch;
+    width: 100%;
+}
+
+.panelGrafico,
+.panelCalculo {
+    min-width: 0;
+    padding: 20px;
+    background: #ffffff;
+    border: 1px solid #d8e3ec;
+    border-radius: 12px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 800px) {
+    .contenedorEfectividad {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

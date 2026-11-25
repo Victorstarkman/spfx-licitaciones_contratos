@@ -24,4 +24,10 @@ export interface IFiltrosProps {
     // Información sobre los filtros activos
     hayFiltrosActivos: boolean;
     descripcionFiltros: string;
+
+    // Opciones compatibles con los filtros seleccionados
+    empresasHabilitadas: Set<number>;
+    serviciosHabilitados: Set<string>;
+    organismosHabilitados: Set<string>;
+    periodosHabilitados: Set<number>;
 }

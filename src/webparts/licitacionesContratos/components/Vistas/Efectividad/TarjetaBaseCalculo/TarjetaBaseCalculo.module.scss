@@ -1,0 +1,61 @@
+.tarjeta {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+    color: #17385d;
+}
+
+.titulo {
+    margin: 0 0 6px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #17385d;
+}
+
+.empresa {
+    margin: 0 0 16px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #526b80;
+    overflow-wrap: break-word;
+}
+
+.indicadores {
+    margin: 0;
+    padding: 0;
+}
+
+.fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-top: 1px solid #d5e1ed;
+
+    dt {
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.4;
+        min-width: 0;
+    }
+
+    dd {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+    }
+}
+
+.nota {
+    margin: 16px 0 0;
+    padding: 10px 12px;
+    background-color: #fcf3df;
+    color: #80570f;
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.5;
+}

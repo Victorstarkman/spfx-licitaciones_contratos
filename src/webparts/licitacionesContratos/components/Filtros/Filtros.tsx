@@ -60,13 +60,18 @@ const Filtros = (props: IFiltrosProps): React.ReactElement => {
                                 a.nombre.localeCompare(b.nombre, 'es')
                             )
                             .map(competidor => (
-                                <option
-                                    key={competidor.id}
-                                    value={competidor.id}
-                                >
-                                    {competidor.nombre}
-                                </option>
-                            ))}
+                            <option
+                                key={competidor.id}
+                                value={competidor.id}
+                                disabled={
+                                    !props.empresasHabilitadas.has(competidor.id) &&
+                                    props.empresaSeleccionada !== String(competidor.id)
+                                }
+                            >
+                                {competidor.nombre}
+                            </option>
+                        ))
+                    }
                     </select>
                 </div>
 
@@ -88,7 +93,14 @@ const Filtros = (props: IFiltrosProps): React.ReactElement => {
                         <option value="">Todos los años</option>
 
                         {props.periodosDisponibles.map(anio => (
-                            <option key={anio} value={anio}>
+                            <option 
+                                key={anio} 
+                                value={anio}
+                                disabled={
+                                    !props.periodosHabilitados.has(anio) &&
+                                    props.periodoSeleccionado !== String(anio)
+                                }
+                                >
                                 {anio}
                             </option>
                         ))}
@@ -113,7 +125,14 @@ const Filtros = (props: IFiltrosProps): React.ReactElement => {
                         <option value="">Todos los servicios</option>
 
                         {props.serviciosDisponibles.map(servicio => (
-                            <option key={servicio} value={servicio}>
+                            <option 
+                                key={servicio} 
+                                value={servicio}
+                                disabled={
+                                        !props.serviciosHabilitados.has(servicio) &&
+                                        props.servicioSeleccionado !== servicio
+                                    }
+                                >
                                 {servicio}
                             </option>
                         ))}
@@ -138,7 +157,14 @@ const Filtros = (props: IFiltrosProps): React.ReactElement => {
                         <option value="">Todos los organismos</option>
 
                         {props.organismosDisponibles.map(organismo => (
-                            <option key={organismo} value={organismo}>
+                            <option 
+                                key={organismo} 
+                                value={organismo}
+                                 disabled={
+                                        !props.organismosHabilitados.has(organismo) &&
+                                        props.organismoSeleccionado !== organismo
+                                    }
+                                >
                                 {organismo}
                             </option>
                         ))}

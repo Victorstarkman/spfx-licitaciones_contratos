@@ -1,0 +1,64 @@
+
+.grafico {
+    width: 100%;
+    min-width: 0;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.filaAnual {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 52px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.anio {
+    font-size: 12px;
+    font-weight: 600;
+    color: #17385d;
+}
+
+.barraContenedor {
+    min-width: 0;
+    position: relative;
+}
+
+.barra {
+    width: 100%;
+}
+
+.porcentaje {
+    font-size: 12px;
+    font-weight: 600;
+    color: #17385d;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.detalle {
+    font-size: 11px;
+    color: #17385d;
+    white-space: nowrap;
+}
+
+.resumen {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.tasaGlobal {
+    font-size: 34px;
+    font-weight: 700;
+    color: #078c87;
+}
+
+@container (max-width: 480px) {
+    .filaAnual {
+        grid-template-columns: 38px minmax(0, 1fr) 45px;
+        gap: 7px;
+    }
+}

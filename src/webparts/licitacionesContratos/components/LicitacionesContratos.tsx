@@ -9,7 +9,8 @@ import GrillaIndicadores from './Indicadores/GrillaIndicadores/GrillaIndicadores
 import { consultarIPC } from '../servicios/ConsultaIPC';
 import type { ISerieIPC } from '../servicios/ConsultaIPC';
 import Filtros from './Filtros/Filtros';
-
+import Efectividad from './Vistas/Efectividad/Efectividad';
+import {filtrarPorCriterios} from '../utilidades/filtrosCruzados'
 //empieza la funcion
 const LicitacionesContratos =
 (props:ILicitacionesContratosProps): React.ReactElement => {
@@ -22,6 +23,7 @@ const [periodoSeleccionado,setPeriodoSeleccionado] = React.useState<string>('');
 const [servicioSeleccionado, setServicioSeleccionado]= React.useState<string>('');
 const [organismoSeleccionado, setOrganismoSeleccionado] = React.useState<string>('');
 const [serieIPC, setSerieIPC] = React.useState<ISerieIPC | undefined> (undefined);
+const [vistaActiva, setVistaActiva] = React.useState<'explorar' | 'efectividad'>('explorar');
 
 //uso de servicios
     React.useEffect(()=> {
@@ -93,8 +95,68 @@ const [serieIPC, setSerieIPC] = React.useState<ISerieIPC | undefined> (undefined
             }
         ,[])
         .sort((a, b)=> a.localeCompare (b,'es'));
+// Opciones disponibles para los filtros cruzados
+const opcionesHabilitadas = React.useMemo(() => {
 
-    const licitacionesFiltradas = React.useMemo(() => {
+    const criterios = {
+        empresa: empresaSeleccionada,
+        periodo: periodoSeleccionado,
+        servicio: servicioSeleccionado,
+        organismo: organismoSeleccionado
+    };
+
+    // Cada selector ignora su propio filtro
+    const baseEmpresas = filtrarPorCriterios(
+        licitaciones, criterios, 'empresa'
+    );
+
+    const baseServicios = filtrarPorCriterios(
+        licitaciones, criterios, 'servicio'
+    );
+
+    const baseOrganismos = filtrarPorCriterios(
+        licitaciones, criterios, 'organismo'
+    );
+
+    const basePeriodos = filtrarPorCriterios(
+        licitaciones, criterios, 'periodo'
+    );
+
+    return {
+        empresas: new Set<number>(
+            baseEmpresas.reduce<number[]>((ids, item) => {
+                return ids.concat(
+                    item.adjudicatariosIds,
+                    item.empresasParticipantesIds
+                );
+            }, [])
+        ),
+
+        servicios: new Set<string>(
+            baseServicios.reduce<string[]>((servicios, item) => {
+                return servicios.concat(item.tipoServicio);
+            }, [])
+        ),
+
+        organismos: new Set<string>(
+            baseOrganismos.map(item => item.organismo)
+        ),
+
+        periodos: new Set<number>(
+            basePeriodos.map(item => item.anio)
+        )
+    };
+
+}, [
+    licitaciones,
+    empresaSeleccionada,
+    periodoSeleccionado,
+    servicioSeleccionado,
+    organismoSeleccionado
+]);
+
+
+const licitacionesFiltradas = React.useMemo(() => {
 
         const texto = busqueda.trim().toLowerCase();
 
@@ -106,31 +168,31 @@ const [serieIPC, setSerieIPC] = React.useState<ISerieIPC | undefined> (undefined
         );
       return licitaciones.filter(item => {
 
-        const idsEmpresas = [
+    const idsEmpresas = [
             ...item.adjudicatariosIds,
             ...item.empresasParticipantesIds
         ];
-        const coincideEmpresa =
+    const coincideEmpresa =
             !empresaSeleccionada ||
             idsEmpresas.indexOf(Number(empresaSeleccionada)) !== -1;
         
-        const coincidePeriodo = 
+    const coincidePeriodo = 
             !periodoSeleccionado ||
             item.anio === Number(periodoSeleccionado)
         
-        const coincideTipoServicio = 
+    const coincideTipoServicio = 
             !servicioSeleccionado ||
             item.tipoServicio.indexOf(servicioSeleccionado)!== -1;
 
-        const coincideOrganismo = 
+    const coincideOrganismo = 
             !organismoSeleccionado ||
             item.organismo.indexOf(organismoSeleccionado) !== -1
 
-        const nombresEmpresas = idsEmpresas
+    const nombresEmpresas = idsEmpresas
             .map(id => empresasPorId.get(id) ?? '')
             .join(' ');
 
-        const contenido = [
+    const contenido = [
             item.organismo,
             item.numeroProceso,
             item.expediente,
@@ -180,7 +242,7 @@ const [serieIPC, setSerieIPC] = React.useState<ISerieIPC | undefined> (undefined
     );
     
     return (
-        <> 
+        <>
 {/* Encabezado */}    
         <header className={styles.encabezado}>
 
@@ -210,19 +272,27 @@ const [serieIPC, setSerieIPC] = React.useState<ISerieIPC | undefined> (undefined
             className={styles.navegacion}
             aria-label="Vistas de licitaciones"
         >
-            <button
+           <button
                 type="button"
-                className={styles.pestanaActiva}
-                aria-current="page"
+                className={
+                    vistaActiva === 'explorar'
+                        ? styles.pestanaActiva
+                        : styles.pestana
+                }
+                onClick={() => setVistaActiva('explorar')}
+                aria-current={vistaActiva === 'explorar' ? 'page' : undefined}
             >
                 Explorar
             </button>
-
             <button
                 type="button"
-                className={styles.pestana}
-                disabled
-                title="Vista pendiente de implementación"
+                className={
+                    vistaActiva === 'efectividad'
+                        ? styles.pestanaActiva
+                        : styles.pestana
+                }
+                onClick={() => setVistaActiva('efectividad')}
+                aria-current={vistaActiva === 'efectividad' ? 'page' : undefined}
             >
                 Efectividad
             </button>
@@ -257,20 +327,28 @@ const [serieIPC, setSerieIPC] = React.useState<ISerieIPC | undefined> (undefined
 
             hayFiltrosActivos={hayFiltrosActivos}
             descripcionFiltros={descripcionFiltros}
+
+            empresasHabilitadas={opcionesHabilitadas.empresas}
+            serviciosHabilitados={opcionesHabilitadas.servicios}
+            organismosHabilitados={opcionesHabilitadas.organismos}
+            periodosHabilitados={opcionesHabilitadas.periodos}
         />
 
-{/* Grilla de tarjetas  */}
+{/* Contenido de la vista seleccionada */}
+{vistaActiva === 'explorar' ? (
+    <>
+        {/* Grilla de indicadores */}
         <section>
-                <GrillaIndicadores
-                    licitaciones={licitacionesFiltradas}
-                    descripcionFiltros= {descripcionFiltros}
-                    serieIPC={serieIPC}
-                />
+            <GrillaIndicadores
+                licitaciones={licitacionesFiltradas}
+                descripcionFiltros={descripcionFiltros}
+                serieIPC={serieIPC}
+            />
         </section>
 
-{/* Tabla */}
-        <TablaLicitaciones 
-            key = {[
+        {/* Tabla de licitaciones */}
+        <TablaLicitaciones
+            key={[
                 busqueda,
                 empresaSeleccionada,
                 periodoSeleccionado,
@@ -278,9 +356,16 @@ const [serieIPC, setSerieIPC] = React.useState<ISerieIPC | undefined> (undefined
                 organismoSeleccionado
             ].join('|')}
             licitaciones={licitacionesFiltradas}
-            competidores={competidores} />
-        </>
-    )
- }
-
+            competidores={competidores}
+        />
+    </>
+) : (
+    <Efectividad
+        licitaciones={licitacionesFiltradas}
+        competidores={competidores}
+        empresaSeleccionada={empresaSeleccionada}
+    />
+)}
+</>
+)};
 export default LicitacionesContratos
