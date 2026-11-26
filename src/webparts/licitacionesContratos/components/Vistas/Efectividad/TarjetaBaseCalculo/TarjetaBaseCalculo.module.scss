@@ -59,3 +59,85 @@
     font-size: 11px;
     line-height: 1.5;
 }
+.coberturaClasificacion {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #d4e1ed;
+
+    small {
+        display: block;
+        margin-top: 6px;
+        font-size: 10px;
+        line-height: 1.5;
+        color: #526b80;
+    }
+}
+
+.coberturaEncabezado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    span {
+        font-size: 12px;
+        font-weight: 500;
+        color: #17385d;
+    }
+
+    strong {
+        font-size: 20px;
+        font-weight: 700;
+        color: #078c87;
+        white-space: nowrap;
+    }
+}
+
+.coberturaBarra {
+    height: 8px;
+    margin-top: 8px;
+    background-color: #e1e9ed;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.coberturaProgreso {
+    height: 100%;
+    background-color: #078c87;
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+.resultadoEtiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    &::before {
+        content: '';
+        display: inline-block;
+
+        width: 10px;
+        height: 10px;
+        flex-shrink: 0;
+
+        border-radius: 2px;
+    }
+}
+
+.ganadas {
+    &::before {
+        background-color: #078c87;
+    }
+}
+
+.perdidas {
+    &::before {
+        background-color: #b7cce6;
+    }
+}
+
+.desestimadas {
+    &::before {
+        background-color: #c97575;
+    }
+}

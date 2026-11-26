@@ -31,18 +31,18 @@ const TarjetaBaseCalculo = (
                 </div>
 
                 <div className={styles.fila}>
-                    <dt>Adjudicaciones</dt>
+                        <dt className= {`${styles.resultadoEtiqueta} ${styles.ganadas}`}>Ganadas</dt>
                     <dd>{resultado.ganadas}</dd>
                 </div>
 
                 <div className={styles.fila}>
-                    <dt>Desestimadas</dt>
-                    <dd>{resultado.desestimadas}</dd>
+                    <dt className={`${styles.resultadoEtiqueta} ${styles.perdidas}`}>Perdidas</dt>
+                    <dd>{resultado.perdidas}</dd>
                 </div>
 
                 <div className={styles.fila}>
-                    <dt>Otros resultados evaluados</dt>
-                    <dd>{resultado.perdidas}</dd>
+                    <dt className={`${styles.resultadoEtiqueta} ${styles.desestimadas}`}>Desestimadas</dt>
+                    <dd>{resultado.desestimadas}</dd>
                 </div>
 
                 <div className={styles.fila}>
@@ -53,6 +53,33 @@ const TarjetaBaseCalculo = (
                 <div className={styles.fila}>
                     <dt>No evaluables</dt>
                     <dd>{resultado.noEvaluables}</dd>
+                </div>
+               <div className={styles.coberturaClasificacion}>
+                    <div className={styles.coberturaEncabezado}>
+
+                        <span>Cobertura de clasificación</span>
+
+                        <strong>
+                            {props.coberturaClasificacion !== undefined
+                                ? `${props.coberturaClasificacion.toFixed(1)} %`
+                                : '—'}
+                        </strong>
+
+                    </div>
+
+                    <div className={styles.coberturaBarra}>
+                        <div
+                            className={styles.coberturaProgreso}
+                            style={{
+                                width: `${props.coberturaClasificacion ?? 0}%`
+                            }}
+                        />
+                    </div>
+
+                    <small>
+                        Antecedentes con resultado competitivo clasificado.
+                    </small>
+
                 </div>
 
             </dl>

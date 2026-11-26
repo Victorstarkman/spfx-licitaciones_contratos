@@ -1,8 +1,4 @@
-
-
 import * as React from 'react';
-
-import { ProgressIndicator } from '@fluentui/react';
 
 import styles from './GraficoEfectividad.module.scss';
 
@@ -53,6 +49,23 @@ const GraficoEfectividad = (
             </div>
 
             <h4>Evolución anual</h4>
+            <div className={styles.leyenda}>
+                <span>
+                    <i style={{ backgroundColor: '#078c87' }} />
+                    Ganadas
+                </span>
+
+                <span>
+                    <i style={{ backgroundColor: '#b7cce6' }} />
+                    Perdidas
+                </span>
+
+                <span>
+                    <i style={{ backgroundColor: '#c97575' }} />
+                    Desestimadas
+                </span>
+
+            </div>
 
             {/* EVOLUCIÓN POR AÑO */}
             {anios.map(anio => {
@@ -64,12 +77,14 @@ const GraficoEfectividad = (
 
                 const resultadoAnio = calcularEfectividad(
                     licitacionesAnio,
-                    props.empresaId
+                    props.empresaId,
+                     props.obtenerAnalisisEmpresa
                 );
 
                 const total = resultadoAnio.totalEvaluados;
                 const ganadas = resultadoAnio.ganadas;
-
+                const perdidas = resultadoAnio.perdidas;
+                const desestimadas = resultadoAnio.desestimadas;
                 // Año sin procesos evaluables
                 if (total === 0) {
                     return (
@@ -94,7 +109,26 @@ const GraficoEfectividad = (
 
                 const porcentaje =
                     resultadoAnio.tasaEfectividad;
-
+                const segmentos = [
+                            {
+                                nombre: 'Ganadas',
+                                cantidad: ganadas,
+                                color: '#078c87',
+                                colorTexto: '#ffffff'
+                            },
+                            {
+                                nombre: 'Perdidas',
+                                cantidad: perdidas,
+                                color: '#b7cce6',
+                                colorTexto: '#17385d'
+                            },
+                            {
+                                nombre: 'Desestimadas',
+                                cantidad: desestimadas,
+                                color: '#c97575',
+                                colorTexto: '#382020'
+                            }
+                        ];
                 return (
                     <div
                         key={anio}
@@ -106,55 +140,52 @@ const GraficoEfectividad = (
                             {anio}
                         </span>
 
-                        {/* BARRA */}
+                       {/* BARRA APILADA */}
                         <div className={styles.barraContenedor}>
 
-                            <ProgressIndicator
-                                className={styles.barra}
-                                percentComplete={porcentaje / 100}
-                                barHeight={22}
-                                ariaLabel={
-                                    `${anio}: ${ganadas} adjudicaciones ` +
-                                    `sobre ${total} procesos evaluados`
-                                }
-                               styles={{
-                                    progressTrack: {
-                                        backgroundColor: '#b7cce6',
-                                        borderRadius: '6px',
-                                        overflow: 'hidden'
-                                    },
-                                    progressBar: {
-                                        backgroundColor: '#078c87',
-                                        borderRadius: '6px'
-                                    }
-                                }}
-                            />
-
-                            {/* CANTIDADES DENTRO DE LA BARRA */}
-                            <span
-                                className={styles.detalle}
-                                style={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    left: 16,
-                                    height: 22,
-                                    lineHeight: '22px',
-                                    pointerEvents: 'none',
-                                    color: porcentaje >= 40
-                                        ? '#ffffff'
-                                        : '#17385d',
-                                    fontWeight: 600
-                                }}
-                                title={
-                                    `${ganadas} adjudicaciones ` +
-                                    `sobre ${total} evaluados`
+                            <div
+                                className={styles.barraApilada}
+                                role="img"
+                                aria-label={
+                                    `${anio}: ${ganadas} ganadas, ` +
+                                    `${perdidas} perdidas, ` +
+                                    `${desestimadas} desestimadas`
                                 }
                             >
-                                {ganadas} / {total}
-                            </span>
+
+                                {segmentos
+                                    .filter(segmento => segmento.cantidad > 0)
+                                    .map(segmento => {
+
+                                        const ancho =
+                                            (segmento.cantidad / total) * 100;
+
+                                        return (
+                                            <div
+                                                key={segmento.nombre}
+                                                className={styles.segmentoBarra}
+                                                style={{
+                                                    width: `${ancho}%`,
+                                                    backgroundColor: segmento.color,
+                                                    color: segmento.colorTexto
+                                                }}
+                                                title={
+                                                    `${segmento.nombre}: ` +
+                                                    `${segmento.cantidad} de ${total} ` +
+                                                    `(${ancho.toFixed(1)}%)`
+                                                }
+                                            >
+                                                {segmento.cantidad}
+                                            </div>
+                                        );
+                                    })
+                                }
+
+                            </div>
 
                         </div>
+
+                            
 
                         {/* PORCENTAJE */}
                         <span className={styles.porcentaje}>

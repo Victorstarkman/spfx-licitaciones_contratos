@@ -1,4 +1,6 @@
 import type { IAntecedente } from '../modelos/IAntecedentes';
+import type { IAnalisisIA } from '../modelos/IAnalisis';
+
 export type TResultadoEfectividad =
     | 'ganada'
     | 'perdida'
@@ -7,6 +9,18 @@ export type TResultadoEfectividad =
     | 'no_evaluable'
     | 'revisar';
 
+export type TEstadoValidacionIA =
+    | 'confirmado'
+    | 'contradictorio'
+    | 'no_concluyente';
+
+export interface IValidacionResultadoIA {
+
+    estado: TEstadoValidacionIA;
+
+    fundamento: string;
+
+}
 export interface IResultadoEfectividad {
         ganadas: number;
         perdidas: number;
@@ -47,7 +61,515 @@ export interface IEmpresaDesestimada {
     nombre: string;
     evidencia: string;
 }
-    //======================================================
+//=======================================
+/* nomalizamos los estados */
+//=====================================
+export const normalizarEstadoProceso = (
+    estado: string | undefined
+): string => {
+
+    return (estado || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+};
+//======================================================
+/* Normalizar Nombres de empresa: Nos permite comparar nombres escritos de distintas maneras:
+Nombre original	Normalizado
+DIENST CONSULTING S.A.	dienst consulting s a
+Dienst Consulting SA	dienst consulting sa
+CITY MEDICAL SERVICE	city medical service
+Río Varadero	rio varadero*/
+//=========================================================
+export const normalizarNombreEmpresa = (
+    nombre: string
+): string => {
+    return nombre
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[.,]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+};
+//===========================================================
+/* en las observaciones debemos extraer el nombre societario que
+no siempre aparece igual */
+//=========================================================
+
+export const obtenerVariantesNombreEmpresa = (
+    nombre: string
+): string[] => {
+
+    const variantes = new Set<string>();
+
+    // Separar denominaciones alternativas del catálogo.
+    const partes = nombre.split(/\s+[-–—]\s+|\s*\/\s*/);
+
+    partes.forEach(parte => {
+
+        const normalizado = normalizarNombreEmpresa(parte);
+
+        if (!normalizado) {
+            return;
+        }
+
+        // Conservar denominación normalizada.
+        variantes.add(normalizado);
+
+        // Quitar solamente formas societarias al final.
+        const sinRazonSocial = normalizado
+            .replace(
+                /\s+(?:s a u|s a s|s r l|s a|srl|sa|sau|sas)$/,
+                ''
+            )
+            .trim();
+
+        if (sinRazonSocial.length >= 5) {
+            variantes.add(sinRazonSocial);
+        }
+    });
+
+    return Array.from(variantes);
+};
+//======================================================
+/* funcion clasificarResultadoCompetitivo entra un analisis
+de una empresa tiene ? porque hay algunas que no tienen id
+y recuperamos su clasificacion de tipo */
+//====================================================
+export const clasificarResultadoCompetitivo = (
+    analisis: IAnalisisEmpresaProceso,
+    resultadoEmpresa?: string
+): TResultadoEfectividad => {
+
+    // Primero verificamos el tipo de procedimiento.
+    if (
+        analisis.evaluacionProceso === 'continuidad' ||
+        analisis.evaluacionProceso === 'sin_adjudicacion'
+    ) {
+        return 'no_evaluable';
+    }
+
+    if (analisis.evaluacionProceso === 'revisar') {
+        return 'revisar';
+    }
+
+    // Normalizamos el resultado particular, si existe.
+    const resultado = (resultadoEmpresa || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+    // Una desestimación específica tiene prioridad.
+    if (
+        resultado === 'desestimada' ||
+        resultado === 'desestimado'
+    ) {
+        return 'desestimada';
+    }
+
+    if (!analisis.participacionConfirmada) {
+        return 'revisar';
+    }
+
+    if (analisis.fueAdjudicatario) {
+        return 'ganada';
+    }
+
+    // Una pérdida requiere una adjudicación confirmada
+    // a otra empresa.
+    if (
+        analisis.evaluacionProceso === 'evaluable' &&
+        analisis.participacionConfirmada &&
+        !analisis.fueAdjudicatario &&
+        analisis.hayAdjudicacion
+    ) {
+        return 'perdida';
+    }
+
+    return 'revisar';
+};
+
+//=======================================
+/* Problema relacion de desestimacion de otras empresas
+usando las observaciones es decir entrada nombre de la empresa y
+observaciones */
+//================================================
+export const detectarEmpresasDesestimadas = (
+    observaciones: string | undefined,
+    empresasPorId: Map<number, string>
+): IEmpresaDesestimada[] => {
+
+    if (!observaciones) {
+        return [];
+    }
+
+    const texto = normalizarNombreEmpresa(observaciones);
+
+    const resultados: IEmpresaDesestimada[] = [];
+
+    
+        empresasPorId.forEach((nombre, empresaId) => {
+
+            const variantes = obtenerVariantesNombreEmpresa(nombre);
+
+           
+           
+            const patronResultado =
+                /^\s*(?:(?:fue|resulto|quedo)\s+(?:declarad[oa]\s+)?|:\s*|(?:oferto|cotizo)\b[^.;]{0,65}?\b(?:y|pero)\s+fue\s+|participo\b[^.;]{0,65}?\bpero\s+su\s+oferta\s+fue\s+|su\s+oferta\s+fue\s+)?(?:desestimad[oa]s?|rechazad[oa]s?|inadmisib(?:le|les))\b/i;
+
+            let evidenciaEncontrada = '';
+
+            variantes.forEach(variante => {
+
+                if (evidenciaEncontrada) {
+                    return;
+                }
+
+                let posicion = texto.indexOf(variante);
+
+                while (posicion !== -1) {
+
+                    const anterior = posicion > 0
+                        ? texto.charAt(posicion - 1)
+                        : '';
+
+                    const posterior = texto.charAt(
+                        posicion + variante.length
+                    );
+
+                    // Evitar coincidencias dentro de otras palabras.
+                    const limiteInicial =
+                        !anterior || !/[a-z0-9]/i.test(anterior);
+
+                    const limiteFinal =
+                        !posterior || !/[a-z0-9]/i.test(posterior);
+
+                    if (limiteInicial && limiteFinal) {
+
+                        const textoPosterior = texto.substring(
+                            posicion + variante.length,
+                            posicion + variante.length + 80
+                        );
+
+                        const coincidencia =
+                            patronResultado.exec(textoPosterior);
+
+                        if (coincidencia) {
+                            evidenciaEncontrada =
+                                variante + coincidencia[0];
+                            break;
+                        }
+                    }
+
+                    posicion = texto.indexOf(
+                        variante,
+                        posicion + variante.length
+                    );
+                }
+            });
+
+            if (evidenciaEncontrada) {
+                resultados.push({
+                    empresaId,
+                    nombre,
+                    evidencia: evidenciaEncontrada
+                });
+            }
+        });
+
+
+            return resultados;
+    };
+//=========================================================
+ /* funcion validarResultados es cuando queremos validar una
+conclusion de la ia  Ejemplos de funcionamiento
+    Resultado IA	Información original	                            Validación
+    Adjudicada	    Figura como adjudicatario de un proceso evaluable	Confirmado
+    No adjudicada	Figura como adjudicatario	                        Contradictorio
+    No adjudicada	Participó y ganó otra empresa	                    Confirmado
+    Desestimada	    ResultadoDienst indica desestimación	            Confirmado
+    Desestimada	    No existe respaldo estructurado	                    No concluyente
+    Recomendada	    Sin resolución definitiva	                        No concluyente
+    */
+    //========================================================
+export const validarResultadoIA = (
+    item: IAntecedente,
+    analisis: IAnalisisEmpresaProceso,
+    analisisIA: IAnalisisIA
+    ): IValidacionResultadoIA => {
+
+    switch (analisisIA.resultadoIA) {
+
+        case 'adjudicada':
+
+            if (
+                analisis.fueAdjudicatario &&
+                analisis.evaluacionProceso === 'evaluable'
+            ) {
+                return {
+                    estado: 'confirmado',
+                    fundamento:
+                        'Adjudicatario registrado en Cronología Pública.'
+                };
+            }
+
+            break;
+
+        case 'no_adjudicada':
+        case 'segunda':
+
+            if (analisis.fueAdjudicatario) {
+                return {
+                    estado: 'contradictorio',
+                    fundamento:
+                        'La empresa figura como adjudicataria.'
+                };
+            }
+
+            if (
+                analisis.participacionConfirmada &&
+                analisis.hayAdjudicacion &&
+                analisis.evaluacionProceso === 'evaluable'
+            ) {
+                return {
+                    estado: 'confirmado',
+                    fundamento:
+                        'Participación registrada y adjudicación a otra empresa.'
+                };
+            }
+
+            break;
+
+            case 'desestimada': {
+
+        if (analisis.fueAdjudicatario) {
+            return {
+                estado: 'no_concluyente',
+                fundamento:'Posible adjudicación y desestimación parcial.'
+        };
+    }
+        // Verificar información estructurada de Dienst
+        const resultadoDienst = normalizarEstadoProceso(
+            item.resultadoDienst
+        );
+
+        if (
+            analisis.empresaId === 25 &&
+            resultadoDienst === 'desestimada'
+        ) {
+            return {
+                estado: 'confirmado',
+                fundamento:
+                    'Desestimación registrada en ResultadoDienst.'
+            };
+        }
+
+        // Buscar respaldo en las observaciones originales
+        const empresasPorId = new Map<number, string>([
+            [
+                analisis.empresaId,
+                analisisIA.nombreEmpresa
+            ]
+        ]);
+
+        const desestimadas = detectarEmpresasDesestimadas(
+            item.observaciones,
+            empresasPorId
+        );
+
+        const coincidencia = desestimadas.find(
+            empresa => empresa.empresaId === analisis.empresaId
+        );
+
+        if (
+            coincidencia &&
+            analisisIA.tipoEvidencia === 'directa'
+        ) {
+            return {
+                estado: 'confirmado',
+                fundamento:
+                    'Coincidencia textual en observaciones: ' +
+                    coincidencia.evidencia
+            };
+        }
+
+        break;
+    }
+
+       case 'adjudicada_y_desestimada_parcialmente':
+
+    if (
+        analisis.fueAdjudicatario &&
+        analisis.evaluacionProceso === 'evaluable'
+    ) {
+        return {
+            estado: 'confirmado',
+            fundamento:
+                'Adjudicación registrada. La desestimación parcial requiere comprobación adicional.'
+        };
+    }
+
+    break;
+
+        case 'no_adjudicada_y_desestimada_parcialmente':
+
+            if (analisis.fueAdjudicatario) {
+                return {
+                    estado: 'contradictorio',
+                    fundamento:
+                        'La empresa figura como adjudicataria.'
+                };
+            }
+
+            if (
+                analisis.participacionConfirmada &&
+                analisis.hayAdjudicacion &&
+                analisis.evaluacionProceso === 'evaluable'
+            ) {
+                return {
+                    estado: 'confirmado',
+                    fundamento:
+                        'Participación sin adjudicación confirmada. La desestimación parcial requiere comprobación adicional.'
+                };
+            }
+
+            break;
+
+        case 'recomendada':
+        case 'indeterminado':
+
+            break;
+
+            }
+
+    return {
+        estado: 'no_concluyente',
+        fundamento:
+            'La información estructurada no permite confirmar el resultado IA.'
+    };
+
+    };
+
+
+//=========================================================================
+/* esta funcion debe resolver la integracion  entre logica e ia la prioridad  */
+//=======================================================================
+export const clasificarResultadoIntegrado = (
+    item: IAntecedente,
+    analisis: IAnalisisEmpresaProceso,
+    analisisIA?: IAnalisisIA
+): TResultadoEfectividad => {
+
+    // 1. Excluir procesos no competitivos
+    if (
+        analisis.evaluacionProceso === 'continuidad' ||
+        analisis.evaluacionProceso === 'sin_adjudicacion'
+    ) {
+        return 'no_evaluable';
+    }
+
+    // 2. Verificar resolución y participación
+    if (
+        analisis.evaluacionProceso === 'revisar' ||
+        !analisis.participacionConfirmada
+    ) {
+        return 'revisar';
+    }
+
+    // 3. Obtener resultado estructurado
+    const resultadoEstructurado =
+        clasificarResultadoCompetitivo(analisis);
+
+    // 4. Aprovechar información específica de Dienst
+    if (analisis.empresaId === 25) {
+
+        const resultadoDienst =
+            normalizarEstadoProceso(item.resultadoDienst);
+
+        if (resultadoDienst === 'desestimada') {
+
+            if (
+                analisis.fueAdjudicatario ||
+                analisisIA?.resultadoIA === 'adjudicada' ||
+                analisisIA?.resultadoIA ===
+                    'adjudicada_y_desestimada_parcialmente'
+            ) {
+                return 'revisar';
+            }
+
+            if (
+                analisisIA?.resultadoIA ===
+                    'no_adjudicada_y_desestimada_parcialmente'
+            ) {
+                return resultadoEstructurado;
+            }
+
+            return 'desestimada';
+        }
+    }
+
+    // 5. Sin análisis IA
+    if (!analisisIA) {
+        return resultadoEstructurado;
+    }
+
+    // 6. Validar resultado IA
+    const validacion = validarResultadoIA(
+        item,
+        analisis,
+        analisisIA
+    );
+
+    // 7. Preservar las contradicciones
+    if (validacion.estado === 'contradictorio') {
+        return 'revisar';
+    }
+
+    // 8. Clasificación individual
+    switch (analisisIA.resultadoIA) {
+
+        case 'adjudicada':
+        case 'adjudicada_y_desestimada_parcialmente':
+
+            return analisis.fueAdjudicatario
+                ? 'ganada'
+                : 'revisar';
+
+        case 'desestimada':
+
+            if (analisis.fueAdjudicatario) {
+                return 'revisar';
+            }
+
+            return validacion.estado === 'confirmado'
+                ? 'desestimada'
+                : resultadoEstructurado;
+
+        case 'no_adjudicada':
+        case 'segunda':
+        case 'no_adjudicada_y_desestimada_parcialmente':
+
+            return resultadoEstructurado === 'perdida'
+                ? 'perdida'
+                : 'revisar';
+
+        case 'indeterminado':
+
+            return resultadoEstructurado;
+
+        case 'recomendada':
+
+            return resultadoEstructurado;
+
+        default:
+
+            return 'revisar';
+    }
+};
+//======================================================
 /* clasificarResultadoDienst() es una función normalizadora de términos.
 Su responsabilidad es tomar los valores originales de SharePoint y convertirlos
  en categorías uniformes que podamos utilizar en los cálculos.*/
@@ -74,19 +596,6 @@ export const clasificarResultadoDienst = (
 
     return 'otro';
 };
-//=======================================
-/* nomalizamos los estados */
-//=====================================
-export const normalizarEstadoProceso = (
-    estado: string | undefined
-): string => {
-
-    return (estado || '')
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
-};
 
 //================================================
 /* funcion evaluarEstadoProceso  entrada estado y la 
@@ -110,31 +619,32 @@ export const evaluarEstadoProceso = (
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '');
 
-    switch (valor) {
+            switch (valor) {
 
-        case 'adjudicado':
-        case 'orden de compra':
-            return 'evaluable';
+            case 'adjudicado':
+            case 'orden de compra':
+                return 'evaluable';
 
-        case 'fracasado':
-        case 'desierto':
-        case 'cancelado':
-            return 'sin_adjudicacion';
+            case 'fracasado':
+            case 'desierto':
+            case 'cancelado':
+                return 'sin_adjudicacion';
 
-        case 'ampliacion':
-        case 'continuidad contractual':
-        case 'readecuacion':
-        case 'recomposicion':
-            return 'continuidad';
+            case 'ampliacion':
+            case 'continuidad contractual':
+            case 'readecuacion':
+            case 'recomposicion':
+            case 'proroga':
+            case 'prorroga':
+                return 'continuidad';
 
-        case 'proroga':
-        case 'prorroga':
-        case 'renovacion':
-            return 'revisar';
+            case 'renovacion':
+                return 'revisar';
 
-        default:
-            return 'revisar';
-    }
+            default:
+                return 'revisar';
+
+        }
 };
 //================================================
 /* Analisis y uso del campo observaciones */
@@ -262,59 +772,8 @@ export const analizarEmpresaProceso = (
         hayAdjudicacion,
     };
 };
-export const clasificarResultadoCompetitivo = (
-    analisis: IAnalisisEmpresaProceso,
-    resultadoEmpresa?: string
-): TResultadoEfectividad => {
+  
 
-    // Primero verificamos el tipo de procedimiento.
-    if (
-        analisis.evaluacionProceso === 'continuidad' ||
-        analisis.evaluacionProceso === 'sin_adjudicacion'
-    ) {
-        return 'no_evaluable';
-    }
-
-    if (analisis.evaluacionProceso === 'revisar') {
-        return 'revisar';
-    }
-
-    // Normalizamos el resultado particular, si existe.
-    const resultado = (resultadoEmpresa || '')
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
-
-    // Una desestimación específica tiene prioridad.
-    if (
-        resultado === 'desestimada' ||
-        resultado === 'desestimado'
-    ) {
-        return 'desestimada';
-    }
-
-    if (!analisis.participacionConfirmada) {
-        return 'revisar';
-    }
-
-    if (analisis.fueAdjudicatario) {
-        return 'ganada';
-    }
-
-    // Una pérdida requiere una adjudicación confirmada
-    // a otra empresa.
-    if (
-        analisis.evaluacionProceso === 'evaluable' &&
-        analisis.participacionConfirmada &&
-        !analisis.fueAdjudicatario &&
-        analisis.hayAdjudicacion
-    ) {
-        return 'perdida';
-    }
-
-    return 'revisar';
-};
 //===============================================
 /* Categoría	Significado
 Ganadas	DIENST obtuvo la adjudicación
@@ -332,7 +791,9 @@ Para comenzar, la tasa será:
 export const calcularEfectividad = (
     licitaciones: IAntecedente[],
     empresaId: number,
-    obtenerResultadoEmpresa?: (item: IAntecedente) => string | undefined
+    obtenerAnalisisEmpresa?: (
+        item: IAntecedente
+    ) => IAnalisisIA | undefined
 ): IResultadoEfectividad => {
 
     let ganadas = 0;
@@ -353,13 +814,14 @@ export const calcularEfectividad = (
             return;
         }
 
-        const resultadoEmpresa = obtenerResultadoEmpresa
-            ? obtenerResultadoEmpresa(item)
+       const analisisIA = obtenerAnalisisEmpresa
+            ? obtenerAnalisisEmpresa(item)
             : undefined;
 
-        const resultado = clasificarResultadoCompetitivo(
+        const resultado = clasificarResultadoIntegrado(
+            item,
             analisis,
-            resultadoEmpresa
+            analisisIA
         );
 
         switch (resultado) {
@@ -407,65 +869,8 @@ export const calcularEfectividad = (
                 tasaEfectividad
     };
 };
-//======================================================
-/* Normalizar Nombres de empresa: Nos permite comparar nombres escritos de distintas maneras:
-Nombre original	Normalizado
-DIENST CONSULTING S.A.	dienst consulting s a
-Dienst Consulting SA	dienst consulting sa
-CITY MEDICAL SERVICE	city medical service
-Río Varadero	rio varadero*/
-//=========================================================
-export const normalizarNombreEmpresa = (
-    nombre: string
-): string => {
-    return nombre
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[.,]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-};
-//===========================================================
-/* en las observaciones debemos extraer el nombre societario que
-no siempre aparece igual */
-//=========================================================
 
-export const obtenerVariantesNombreEmpresa = (
-    nombre: string
-): string[] => {
 
-    const variantes = new Set<string>();
-
-    // Separar denominaciones alternativas del catálogo.
-    const partes = nombre.split(/\s+[-–—]\s+|\s*\/\s*/);
-
-    partes.forEach(parte => {
-
-        const normalizado = normalizarNombreEmpresa(parte);
-
-        if (!normalizado) {
-            return;
-        }
-
-        // Conservar denominación normalizada.
-        variantes.add(normalizado);
-
-        // Quitar solamente formas societarias al final.
-        const sinRazonSocial = normalizado
-            .replace(
-                /\s+(?:s a u|s a s|s r l|s a|srl|sa|sau|sas)$/,
-                ''
-            )
-            .trim();
-
-        if (sinRazonSocial.length >= 5) {
-            variantes.add(sinRazonSocial);
-        }
-    });
-
-    return Array.from(variantes);
-};
 //======================================================
 /* Problema de obtener variantes cuando en observaciones se desestima
 grupalmente Busca las expresiones grupales y extrae el texto anterior al resultado, respetando los límites de la oración.*/
@@ -499,94 +904,4 @@ export const extraerGruposDesestimados = (
     return grupos;
 };
 
-//=======================================
-/* Problema relacion de desestimacion de otras empresas
-usando las observaciones es decir entrada nombre de la empresa y
-observaciones */
-//================================================
-export const detectarEmpresasDesestimadas = (
-    observaciones: string | undefined,
-    empresasPorId: Map<number, string>
-): IEmpresaDesestimada[] => {
 
-    if (!observaciones) {
-        return [];
-    }
-
-    const texto = normalizarNombreEmpresa(observaciones);
-
-    const resultados: IEmpresaDesestimada[] = [];
-
-    
-        empresasPorId.forEach((nombre, empresaId) => {
-
-            const variantes = obtenerVariantesNombreEmpresa(nombre);
-
-           
-           
-            const patronResultado =
-                /^\s*(?:(?:fue|resulto|quedo)\s+(?:declarad[oa]\s+)?|:\s*|(?:oferto|cotizo)\b[^.;]{0,65}?\b(?:y|pero)\s+fue\s+|participo\b[^.;]{0,65}?\bpero\s+su\s+oferta\s+fue\s+|su\s+oferta\s+fue\s+)?(?:desestimad[oa]s?|rechazad[oa]s?|inadmisib(?:le|les))\b/i;
-
-            let evidenciaEncontrada = '';
-
-            variantes.forEach(variante => {
-
-                if (evidenciaEncontrada) {
-                    return;
-                }
-
-                let posicion = texto.indexOf(variante);
-
-                while (posicion !== -1) {
-
-                    const anterior = posicion > 0
-                        ? texto.charAt(posicion - 1)
-                        : '';
-
-                    const posterior = texto.charAt(
-                        posicion + variante.length
-                    );
-
-                    // Evitar coincidencias dentro de otras palabras.
-                    const limiteInicial =
-                        !anterior || !/[a-z0-9]/i.test(anterior);
-
-                    const limiteFinal =
-                        !posterior || !/[a-z0-9]/i.test(posterior);
-
-                    if (limiteInicial && limiteFinal) {
-
-                        const textoPosterior = texto.substring(
-                            posicion + variante.length,
-                            posicion + variante.length + 80
-                        );
-
-                        const coincidencia =
-                            patronResultado.exec(textoPosterior);
-
-                        if (coincidencia) {
-                            evidenciaEncontrada =
-                                variante + coincidencia[0];
-                            break;
-                        }
-                    }
-
-                    posicion = texto.indexOf(
-                        variante,
-                        posicion + variante.length
-                    );
-                }
-            });
-
-            if (evidenciaEncontrada) {
-                resultados.push({
-                    empresaId,
-                    nombre,
-                    evidencia: evidenciaEncontrada
-                });
-            }
-        });
-
-
-            return resultados;
-    };

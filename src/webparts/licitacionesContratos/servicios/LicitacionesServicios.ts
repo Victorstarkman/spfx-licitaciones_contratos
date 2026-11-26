@@ -8,11 +8,16 @@ import { transformarAntecedente } from './transformarAntecedente';
 import { transformarCompetidor } from './transformarCompetidor';
 import { ICompetidor } from '../modelos/ICompetidor';
 
+import {IAnalisisIA } from '../modelos/IAnalisis'
+import {IAnalisisIASharePoint} from '../modelos/IAnalisisIASharepoint'
+import { transformarAnalisisIA } from '../servicios/transformarAnalisisIA'
+
 const sitio = 'https://dienstar.sharepoint.com'
 const listas = {
     competidores: '74bfdf59-3ba2-420e-950d-d048a4d4b7a9',
-    cronologia: 'b06863ce-2dc8-4388-992a-f9daa27b006e'
-}
+    cronologia: 'b06863ce-2dc8-4388-992a-f9daa27b006e',
+    analisisIA: 'ec31aca4-8986-4106-8291-4ace7b3616c7'
+};
 
 const consultarListas = async(
     spHttpClient: SPHttpClient,
@@ -94,6 +99,23 @@ export const consultarCompetidorPorId =async (
         const datos = await  respuesta.json();
         return datos;
 }
+export const consultarAnalisisIA = async (
+    spHttpClient: SPHttpClient
+): Promise<IAnalisisIA[]> => {
+
+    const datos = await consultarListas(
+        spHttpClient,
+        listas.analisisIA
+    );
+
+   
+    const transformados = (datos as IAnalisisIASharePoint[])
+        .map(transformarAnalisisIA);
+
+
+    return transformados;
+
+};
 
 
 

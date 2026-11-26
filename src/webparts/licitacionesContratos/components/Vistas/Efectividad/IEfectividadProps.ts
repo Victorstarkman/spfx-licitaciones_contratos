@@ -1,5 +1,6 @@
 import type { IAntecedente } from '../../../modelos/IAntecedentes';
 import type { ICompetidor } from '../../../modelos/ICompetidor';
+import type { IAnalisisIA } from '../../../modelos/IAnalisis'
 
 export interface IEfectividadProps {
 
@@ -17,4 +18,6 @@ export interface IEfectividadProps {
     aniosSeleccionados: number[];
 
     onCambiarAnios: (anios: number[]) => void;
-    }
+    
+    indiceAnalisisIA: Map<string, IAnalisisIA>;
+}

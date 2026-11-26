@@ -3,4 +3,6 @@ export interface ITarjetaBaseCalculoProps {
     
     nombreEmpresa: string;
     resultado: IResultadoEfectividad
+    coberturaClasificacion: number | undefined
+    
 }

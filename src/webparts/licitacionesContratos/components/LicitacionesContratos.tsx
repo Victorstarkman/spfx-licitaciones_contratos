@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { ILicitacionesContratosProps } from './ILicitacionesContratosProps';
-import {consultarLicitaciones, consultarCompetidores } from '../servicios/LicitacionesServicios'
+import {consultarLicitaciones, consultarCompetidores, consultarAnalisisIA } from '../servicios/LicitacionesServicios'
 import { IAntecedente } from '../modelos/IAntecedentes';
 import { ICompetidor } from '../modelos/ICompetidor';
 import TablaLicitaciones from './tablaLicitacion/TablaLicitacion';
@@ -11,6 +11,9 @@ import type { ISerieIPC } from '../servicios/ConsultaIPC';
 import Filtros from './Filtros/Filtros';
 import Efectividad from './Vistas/Efectividad/Efectividad';
 import {filtrarPorCriterios} from '../utilidades/filtrosCruzados'
+import  type { IAnalisisIA } from '../modelos/IAnalisis';
+import { validarAnalisisIA } from '../utilidades/analisisIAUtilidades';
+
 //empieza la funcion
 const LicitacionesContratos =
 (props:ILicitacionesContratosProps): React.ReactElement => {
@@ -25,7 +28,7 @@ const [organismoSeleccionado, setOrganismoSeleccionado] = React.useState<string>
 const [serieIPC, setSerieIPC] = React.useState<ISerieIPC | undefined> (undefined);
 const [vistaActiva, setVistaActiva] = React.useState<'explorar' | 'efectividad'>('explorar');
 const [aniosSeleccionados, setAniosSeleccionados] = React.useState<number[]>([]);
-
+const [analisisIA, setAnalisisIA] = React.useState<IAnalisisIA[]>([]);
 //uso de servicios
     React.useEffect(()=> {
     const cargarLicitaciones = async():Promise<void> => {
@@ -67,7 +70,54 @@ const [aniosSeleccionados, setAniosSeleccionados] = React.useState<number[]>([])
             console.error('Error inesperado al consultar IPC:', error);
         });
     },[props.spHttpClient]);
+    
+    React.useEffect(() => {
 
+    const cargarAnalisisIA = async (): Promise<void> => {
+
+        try {
+
+            const datos = await consultarAnalisisIA(
+                props.spHttpClient
+            );
+
+            setAnalisisIA(datos);
+
+        } catch (error) {
+
+            console.error(
+                'Error al consultar análisis IA:',
+                error
+            );
+
+        }
+    };
+
+    cargarAnalisisIA().catch((error: unknown) => {
+
+        console.error(
+            'Error inesperado al cargar análisis IA:',
+            error
+        );
+
+    });
+
+    }, [props.spHttpClient]);
+    
+    const validacionIA = React.useMemo(() => {
+
+        return validarAnalisisIA(
+            analisisIA,
+            licitaciones,
+            competidores
+        );
+
+    }, [
+        analisisIA,
+        licitaciones,
+        competidores
+    ]);
+  
 //filtros
     const organismosDisponibles = licitaciones
         .map(item => item.organismo)
@@ -386,6 +436,7 @@ const licitacionesFiltradas = React.useMemo(() => {
         aniosDisponibles={periodosDisponibles}
         aniosSeleccionados={aniosSeleccionados}
         onCambiarAnios={setAniosSeleccionados}
+        indiceAnalisisIA={validacionIA.indice}
         />
 )}
 </>
