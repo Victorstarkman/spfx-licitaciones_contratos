@@ -371,7 +371,7 @@ const licitacionesFiltradas = React.useMemo(() => {
     };
 //UI    
     return (
-        <>
+         <div className={styles.contenedorPrincipal}>
 {/* Encabezado */}    
         <header className={styles.encabezado}>
 
@@ -557,6 +557,6 @@ const licitacionesFiltradas = React.useMemo(() => {
 
 )}
 
-</>
+</div>
 )};
 export default LicitacionesContratos

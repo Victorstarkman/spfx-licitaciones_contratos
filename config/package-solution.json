@@ -3,7 +3,7 @@
   "solution": {
     "name": "licitaciones-contratos-client-side-solution",
     "id": "a4dc3b75-cf43-4dff-9ba0-f6493fb76919",
-    "version": "1.0.0.0",
+    "version": "1.0.0.1",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
