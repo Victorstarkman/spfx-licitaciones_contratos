@@ -1,0 +1,298 @@
+.contenedor {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+
+    background-color: #ffffff;
+    border: 1px solid #dce5ed;
+    border-radius: 10px;
+}
+
+//=========================================
+// Contenedor de la tabla
+//=========================================
+
+.contenedorTabla {
+    width: 100%;
+    min-width: 0;
+
+    overflow-x: auto;
+    border-radius: 10px 10px 0 0;
+}
+
+//=========================================
+// Tabla
+//=========================================
+
+.tabla {
+    width: 100%;
+    min-width: 640px;
+
+    border-collapse: collapse;
+
+    color: #17385d;
+    font-size: 12px;
+
+    thead {
+        background-color: #f1f6f7;
+    }
+
+    th {
+        padding: 12px 10px;
+
+        color: #526b80;
+        font-size: 12px;
+        font-weight: 600;
+
+        text-align: left;
+        border-bottom: 1px solid #dce5ed;
+
+        &:first-child {
+            width: 48px;
+            text-align: center;
+        }
+    }
+
+    td {
+        padding: 10px;
+
+        vertical-align: middle;
+        line-height: 1.5;
+
+        border-bottom: 1px solid #e5ebf0;
+
+        &:first-child {
+            text-align: center;
+        }
+
+        strong {
+            font-weight: 600;
+        }
+    }
+
+    tbody {
+        tr {
+            cursor: pointer;
+
+            transition: background-color 150ms ease;
+
+            &:nth-child(even) {
+                background-color: #f8fafc;
+            }
+
+            &:hover {
+                background-color: #edf5f5;
+            }
+
+            &:last-child td {
+                border-bottom: none;
+            }
+        }
+    }
+}
+
+//=========================================
+// Checkbox de seguimiento
+//=========================================
+
+.checkbox {
+    width: 18px;
+    height: 18px;
+
+    margin: 0;
+
+    accent-color: #078c87;
+    vertical-align: middle;
+    cursor: pointer;
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+    &:focus-visible {
+        outline: 2px solid #17385d;
+        outline-offset: 3px;
+    }
+}
+
+//=========================================
+// Número de proceso
+//=========================================
+
+.numeroProceso {
+    display: block;
+
+    padding: 4px 0;
+    margin-top: 3px;
+
+    background: transparent;
+    border: none;
+
+    color: #087b77;
+    font-family: inherit;
+    font-size: 11px;
+
+    text-align: left;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
+
+    &:focus-visible {
+        outline: 2px solid #078c87;
+        outline-offset: 2px;
+    }
+}
+
+//=========================================
+// Fecha de finalización
+//=========================================
+
+.fecha {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+//=========================================
+// Estados contractuales
+//=========================================
+
+.vigente,
+.vencido,
+.sinFecha {
+    display: inline-block;
+
+    padding: 4px 8px;
+
+    border: 1px solid transparent;
+    border-radius: 5px;
+
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.vigente {
+    background-color: #e8f6f3;
+    border-color: #c5e5df;
+    color: #076e69;
+}
+
+.vencido {
+    background-color: #fff3df;
+    border-color: #ecd6ad;
+    color: #8a611c;
+}
+
+.sinFecha {
+    background-color: #eef1f4;
+    border-color: #dce3e9;
+    color: #526b80;
+}
+
+//=========================================
+// Sin resultados
+//=========================================
+
+.sinResultados {
+    padding: 24px !important;
+
+    color: #526b80;
+    text-align: center;
+    font-size: 13px;
+}
+
+//=========================================
+// Paginación
+//=========================================
+
+.paginacion {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 12px;
+    padding: 12px 14px;
+
+    border-top: 1px solid #dce5ed;
+
+    color: #526b80;
+    font-size: 12px;
+}
+
+.controlesPagina {
+    display: flex;
+    align-items: center;
+
+    gap: 5px;
+}
+
+.botonPagina {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 44px;
+    height: 44px;
+
+    padding: 0;
+
+    background-color: #ffffff;
+    border: 1px solid #cbdce8;
+    border-radius: 5px;
+
+    color: #17385d;
+    font-size: 18px;
+    font-family: inherit;
+
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background-color: #e8f6f3;
+        border-color: #078c87;
+        color: #078c87;
+    }
+
+    &:disabled {
+        background-color: #f4f6f8;
+        color: #aab8c5;
+        cursor: not-allowed;
+    }
+
+    &:focus-visible {
+        outline: 2px solid #078c87;
+        outline-offset: 2px;
+    }
+}
+
+.numeroPagina {
+    min-width: 50px;
+
+    color: #526b80;
+    font-size: 12px;
+    font-weight: 600;
+
+    text-align: center;
+    white-space: nowrap;
+}
+
+//=========================================
+// Responsividad
+//=========================================
+
+@media (max-width: 600px) {
+
+    .paginacion {
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .controlesPagina {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}

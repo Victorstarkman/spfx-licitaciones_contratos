@@ -1,0 +1,72 @@
+.fechasSeguimiento {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    margin-top: 12px;
+    padding-top: 12px;
+
+    border-top: 1px solid #dce5ed;
+}
+
+.filaFecha {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    span {
+        color: #526b80;
+        font-size: 12px;
+    }
+
+    strong {
+        color: #17385d;
+        font-size: 13px;
+        font-weight: 600;
+    }
+}
+
+.botonDesactivar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    width: 100%;
+    min-height: 44px;
+
+    margin-top: 14px;
+    padding: 10px 12px;
+
+    background-color: #ffffff;
+    border: 1px solid #c97575;
+    border-radius: 8px;
+
+    color: #a34141;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: background-color 180ms ease;
+
+    &:hover:not(:disabled) {
+        background-color: #fceeee;
+    }
+
+    &:focus-visible {
+        outline: 2px solid #c97575;
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+}
+.mensajeResultado {
+    margin-bottom: 20px;
+}

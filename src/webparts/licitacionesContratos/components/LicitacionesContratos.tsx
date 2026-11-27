@@ -13,6 +13,11 @@ import Efectividad from './Vistas/Efectividad/Efectividad';
 import {filtrarPorCriterios} from '../utilidades/filtrosCruzados'
 import  type { IAnalisisIA } from '../modelos/IAnalisis';
 import { validarAnalisisIA } from '../utilidades/analisisIAUtilidades';
+import  ContratosVigentes  from '../components/Vistas/ContratosVigentes/ContratosVigentes'
+import { agruparContratos,obtenerOpcionesContratos } from '../utilidades/contratoUtilidades';
+import type { TFiltroSituacion } from './Vistas/ContratosVigentes/SelectorSituacion/ISelectorSituacionProps';
+import ModalSeguimiento from './Vistas/ContratosVigentes/ModalSeguimiento/ModalSeguimiento';
+import ModalMisSeguimientos from './Vistas/ContratosVigentes/ModalMisSeguimientos/ModalMisSeguimientos';
 
 //empieza la funcion
 const LicitacionesContratos =
@@ -26,9 +31,13 @@ const [periodoSeleccionado,setPeriodoSeleccionado] = React.useState<string>('');
 const [servicioSeleccionado, setServicioSeleccionado]= React.useState<string>('');
 const [organismoSeleccionado, setOrganismoSeleccionado] = React.useState<string>('');
 const [serieIPC, setSerieIPC] = React.useState<ISerieIPC | undefined> (undefined);
-const [vistaActiva, setVistaActiva] = React.useState<'explorar' | 'efectividad'>('explorar');
+const [vistaActiva, setVistaActiva] = React.useState<'explorar' | 'efectividad' | 'contratos'>('explorar');
 const [aniosSeleccionados, setAniosSeleccionados] = React.useState<number[]>([]);
 const [analisisIA, setAnalisisIA] = React.useState<IAnalisisIA[]>([]);
+const [situacionSeleccionada,setSituacionSeleccionada] = React.useState<TFiltroSituacion>('vigente');
+const [contratosSeleccionados, setContratosSeleccionados] = React.useState<string[]>([]);
+const [modalSeguimientoAbierto,setModalSeguimientoAbierto]= React.useState<Boolean>(false);
+const [modalMisSeguimientosAbierto,setModalMisSeguimientosAbierto] = React.useState<boolean>(false);
 //uso de servicios
     React.useEffect(()=> {
     const cargarLicitaciones = async():Promise<void> => {
@@ -51,7 +60,7 @@ const [analisisIA, setAnalisisIA] = React.useState<IAnalisisIA[]>([]);
     cargarLicitaciones().catch((error: unknown) => {
     console.error('Error inesperado al cargar licitaciones:', error);
     });
-},[props.spHttpClient]);
+    },[props.spHttpClient]);
 
     React.useEffect(()=>{
         const probarConsultarIPC = async():Promise<void> => {
@@ -103,7 +112,7 @@ const [analisisIA, setAnalisisIA] = React.useState<IAnalisisIA[]>([]);
     });
 
     }, [props.spHttpClient]);
-    
+  //Guardas 
     const validacionIA = React.useMemo(() => {
 
         return validarAnalisisIA(
@@ -117,7 +126,13 @@ const [analisisIA, setAnalisisIA] = React.useState<IAnalisisIA[]>([]);
         licitaciones,
         competidores
     ]);
-  
+    React.useEffect(() => {
+
+    if (contratosSeleccionados.length === 0) {
+        setModalSeguimientoAbierto(false);
+    }
+
+}, [contratosSeleccionados]);
 //filtros
     const organismosDisponibles = licitaciones
         .map(item => item.organismo)
@@ -147,7 +162,44 @@ const [analisisIA, setAnalisisIA] = React.useState<IAnalisisIA[]>([]);
         ,[])
         .sort((a, b)=> a.localeCompare (b,'es'));
 // Opciones disponibles para los filtros cruzados
+const contratos = React.useMemo(() => {
+
+    return agruparContratos(licitaciones);
+
+}, [licitaciones]);
+const contratosParaSeguimiento = React.useMemo(() => {
+
+    return contratos.filter(item =>
+        contratosSeleccionados.indexOf(item.clave) !== -1
+    );
+
+}, [
+    contratos,
+    contratosSeleccionados
+]);
 const opcionesHabilitadas = React.useMemo(() => {
+
+    if (vistaActiva === 'contratos') {
+
+        const baseContratos =
+            situacionSeleccionada === 'todos'
+                ? contratos
+                : contratos.filter(
+                    item => item.situacion === situacionSeleccionada
+                );
+
+        return obtenerOpcionesContratos(
+            baseContratos,
+            competidores,
+            {
+                busqueda: busqueda,
+                empresa: empresaSeleccionada,
+                periodo: periodoSeleccionado,
+                servicio: servicioSeleccionado,
+                organismo: organismoSeleccionado
+            }
+        );
+    }
 
     const criterios = {
         empresa: empresaSeleccionada,
@@ -158,6 +210,7 @@ const opcionesHabilitadas = React.useMemo(() => {
             ? aniosSeleccionados
             : undefined
     };
+
 
     // Cada selector ignora su propio filtro
     const baseEmpresas = filtrarPorCriterios(
@@ -208,7 +261,11 @@ const opcionesHabilitadas = React.useMemo(() => {
     servicioSeleccionado,
     organismoSeleccionado,
     vistaActiva,
-    aniosSeleccionados
+    aniosSeleccionados,
+    contratos,
+    competidores,
+    situacionSeleccionada,
+    busqueda
 ]);
 const licitacionesFiltradas = React.useMemo(() => {
 
@@ -307,7 +364,12 @@ const licitacionesFiltradas = React.useMemo(() => {
         servicioSeleccionado ||
         organismoSeleccionado
     );
-    
+    const quitarContratoSeguimiento = (clave:string):void => {
+        setContratosSeleccionados(anteriores => 
+            anteriores.filter(item => item !== clave)
+        );
+    };
+//UI    
     return (
         <>
 {/* Encabezado */}    
@@ -366,12 +428,20 @@ const licitacionesFiltradas = React.useMemo(() => {
 
             <button
                 type="button"
-                className={styles.pestana}
-                disabled
-                title="Vista pendiente de implementación"
+                className={
+                    vistaActiva === 'contratos'
+                        ? styles.pestanaActiva
+                        : styles.pestana
+                }
+                onClick={() => setVistaActiva('contratos')}
+                aria-current={
+                    vistaActiva === 'contratos'
+                        ? 'page'
+                        : undefined
+                }
             >
-                Contratos vigentes
-            </button>
+    Contratos vigentes
+</button>
         </nav>
 {/* filtros */}
         <Filtros
@@ -401,6 +471,13 @@ const licitacionesFiltradas = React.useMemo(() => {
             periodosHabilitados={opcionesHabilitadas.periodos}
             deshabilitarPeriodo={vistaActiva === 'efectividad'}
             onLimpiarAnios={() => setAniosSeleccionados([])}
+            mostrarSeguimiento={vistaActiva === 'contratos'}
+            cantidadSeleccionados={contratosSeleccionados.length}
+            onAbrirSeguimiento={contratosSeleccionados.length > 0
+                ? () => setModalSeguimientoAbierto(true)
+                : undefined
+                }
+            onAbrirMisSeguimientos={()=>{setModalMisSeguimientosAbierto(true)}}
         />
 
 {/* Contenido de la vista seleccionada */}
@@ -428,7 +505,7 @@ const licitacionesFiltradas = React.useMemo(() => {
             competidores={competidores}
         />
     </>
-) : (
+) : (  vistaActiva === 'efectividad' ? (
     <Efectividad
         licitaciones={licitacionesFiltradas}
         competidores={competidores}
@@ -438,7 +515,48 @@ const licitacionesFiltradas = React.useMemo(() => {
         onCambiarAnios={setAniosSeleccionados}
         indiceAnalisisIA={validacionIA.indice}
         />
+) : (
+   <ContratosVigentes
+    licitaciones={licitaciones}
+    competidores={competidores}
+
+    busqueda={busqueda}
+    empresaSeleccionada={empresaSeleccionada}
+    periodoSeleccionado={periodoSeleccionado}
+    servicioSeleccionado={servicioSeleccionado}
+    organismoSeleccionado={organismoSeleccionado}
+
+    contratos={contratos}
+    situacionSeleccionada={situacionSeleccionada}
+    onCambiarSituacion={setSituacionSeleccionada}
+    contratosSeleccionados={contratosSeleccionados}
+    setContratosSeleccionados={setContratosSeleccionados}
+/>
+    ))}
+    {vistaActiva === 'contratos' && modalSeguimientoAbierto && (
+
+    <ModalSeguimiento
+        contratos={contratosParaSeguimiento}
+        competidores={competidores}
+        onQuitarContrato={quitarContratoSeguimiento}
+        spHttpClient={props.spHttpClient}
+        onCerrar={() =>
+            setModalSeguimientoAbierto(false)
+        }
+    />
+
+    )}
+    {vistaActiva === 'contratos' && modalMisSeguimientosAbierto && (
+
+    <ModalMisSeguimientos
+        spHttpClient={props.spHttpClient}
+        onCerrar={() =>
+            setModalMisSeguimientosAbierto(false)
+        }
+    />
+
 )}
+
 </>
 )};
 export default LicitacionesContratos

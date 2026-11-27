@@ -156,6 +156,8 @@
     box-sizing: border-box;
 
     margin-top: 2px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .botonLimpiar {
@@ -208,5 +210,100 @@
 
     .resumenFiltros {
         padding: 12px;
+    }
+}
+.botonSeguimiento {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    min-height: 44px;
+    padding: 8px 14px;
+
+    background-color: #078c87;
+    border: 1px solid #078c87;
+    border-radius: 8px;
+
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background-color: #067570;
+    }
+
+    &:focus-visible {
+        outline: 2px solid #17385d;
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    svg {
+        flex-shrink: 0;
+    }
+}
+
+.cantidadSeguimiento {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+
+    background-color: rgba(255, 255, 255, 0.22);
+    border-radius: 6px;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+.botonMisSeguimientos {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    min-height: 44px;
+    padding: 10px 14px;
+
+    background-color: #ffffff;
+    border: 1px solid #078c87;
+    border-radius: 8px;
+
+    color: #078c87;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: background-color 180ms ease,
+                border-color 180ms ease;
+
+    svg {
+        flex-shrink: 0;
+    }
+
+    &:hover:not(:disabled) {
+        background-color: #e5f5f2;
+    }
+
+    &:focus-visible {
+        outline: 2px solid #078c87;
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
     }
 }

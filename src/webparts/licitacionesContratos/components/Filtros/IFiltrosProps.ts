@@ -35,4 +35,8 @@ export interface IFiltrosProps {
     deshabilitarPeriodo: boolean;
     //aviso de limpieza de filtro 
     onLimpiarAnios: () => void;
+    mostrarSeguimiento?: boolean;
+    cantidadSeleccionados?: number;
+    onAbrirSeguimiento?: () => void;
+    onAbrirMisSeguimientos?:() => void;
 }
